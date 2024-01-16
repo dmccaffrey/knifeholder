@@ -1,62 +1,190 @@
-// The Nick Shabazz Parametric Knife Display Stand
-// Set the parameters below, and you're off
-// All values below in millimeters
-// Open this using OpenSCAD to modify or render - https://openscad.org/
-// Nick Shabazz - 2024
+/*
+--------------------------------------------------------------------------------
+The Nick Shabazz Parametric Knife Display Stand (dmccaffrey fork)
+Originally created by Nick Shabazz - 2024
+--------------------------------------------------------------------------------
+*/
 
-// Length in mm (perpendicular to the knives)
-blength=100;
-// Width in mm (parallel to the knives)
-bwidth=150;
-// Thickness in mm of the base (8mm is reasonable)
-bthiccness=8;
-// Radius in mm at base of the base (10mm is reasonable)
-bhullrad1=10;
-// Radius in mm at top of the base (for tapering base, for untapered, make the same value as above) (6mm is reasonable)
-bhullrad2=6;
-// Increase in height from tier to tier in mm (sets the difference between each level of knife, as well as the height of the first layer) (25mm is reasonable)
-handleheightdiff=25;
-// Distance in mm between the top of the handle rest and the top of the blade rest (13mm is reasonable)
-handletobladefall=13;
-// Diameter of the handle rest in mm (25mm is reasonable)
-handlediameter=25;
-// Blade Notch Depth in mm (how deep the notch for the blade is) (8mm is reasonable)
-bladenotchdepth=8;
-// Blade Notch Width in mm (how wide the top of the notch for the blade is) (3mm is reasonable)
-bladenotchwidth=3;
-// Position of the supports in terms of width (e.g. 0.2 will put it at 20% and 80% of the width) of the base
-supportpositionwidth=0.15;
-// Width of the supports in mm (20mm is reasonable)
-supportwidth=20;
+/*
+Introduction
+--------------------------------------------------------------------------------
+This file is written in the OpenSCAD language and should be opened in OpenSCAD
+for editing or to render a result.
+- https://openscad.org/
+- https://en.wikibooks.org/wiki/OpenSCAD_User_Manual/The_OpenSCAD_Language
 
-// Number of knives
-knifenum=2;
+To get started simply modify the holder and base configuration to your liking.
+Holder properties are specified as vectors so that any number of objects can
+be supported in any ordering.
 
-// Defines the length of each support piece in terms of the overall length of the base
-supportlength=(0.8*blength)/knifenum;
-// No need to modify this bit, it just defines the position of the supports parametrically
-righthandlepos=(1-supportpositionwidth)*bwidth;
-rightbladepos=supportpositionwidth*bwidth;
-lefthandlepos=supportpositionwidth*bwidth;
-leftbladepos=(1-supportpositionwidth)*bwidth;
 
-// To put the handle on the left, change the below two statements to read 'lefthandlepos' and 'leftbladepos'
-handlepos=lefthandlepos;
-bladepos=leftbladepos;
+Note: All distance values are specified in millimeters.
+--------------------------------------------------------------------------------
+*/
+
+
+/*
+Holder Configuration
+--------------------------------------------------------------------------------
+- Objects can currently be of type "pen", "knife" (blade and hanlde), or "sword" (blade and blade)
+- Show side may be "right" or left"
+- Heigh offset specifies the staggering in height between holders
+- Depth offset specifies the stagging in depth (front to back) between holders
+- Width species with width (righ to left) of each holder
+- Held dimensinons specify the left and right handle/pen or blade cutout diameter
+- Drop height specifies the difference between the 'handle' side and non-hanlde side
+*/
+objects             = ["pen", "knife", "sword"];
+showSide            = "right";
+holderHeightOffset  = [0, 15, 15];
+holderDepthOffset   = [0, 20, 20];
+holderWidth         = [10, 20, 20];
+heldDimensions      = [ [15, 10], [3, 20], [6, 6] ];
+dropHeight          = [0, 0, 10];
+//------------------------------------------------------------------------------
+
+/*
+Base Configuration
+--------------------------------------------------------------------------------
+*/
+splitBase           = false;    // Set to true to print separate holder pieces
+openBase            = true;     // Set to true to print the base with a cutout between the holders
+baseTaperPercent    = 20;       // The percentage of taper (bottom to top) for the base
+basePerimiter       = 15;       // The perimeter radius of the base
+baseHeight          = 8;        // Hight of the base
+baseWidth           = 150;      // Width of the base
+//------------------------------------------------------------------------------
+
+
+/*
+Derived Configuration
+--------------------------------------------------------------------------------
+*/
+baseLength = Sum(holderDepthOffset) + basePerimiter * 4;
+echo("Base length: ", baseLength);
+
+supportLength=(0.8 * baseLength) / len(objects);
+echo("Support length: ", supportLength);
+
+supportPosOffset = 0.15;
+leftHolderPos = supportPosOffset * baseWidth;
+rightHolderPos = (1 - supportPosOffset) * baseWidth;
+echo("Handle positions: left=", leftHolderPos, "right=", rightHolderPos);
+//------------------------------------------------------------------------------
+
+/*
+Rendering
+--------------------------------------------------------------------------------
+*/
+union(){
+    baseHeight = 10;
+    for (i = [0:len(objects)-1]){
+        offset = Sum(holderDepthOffset, i) + basePerimiter * 2;
+        holderHeight = Sum(holderHeightOffset, i) + 10;
+        dropSideHeight = holderHeight - dropHeight[i];
+        echo("Generating holder: num=", i, "offset=", offset, "baseHeight=", baseHeight, "dropSideHeight=", dropSideHeight);
+        
+        showSidePos = (showSide == "right") ? rightHolderPos : leftHolderPos;
+        otherSidePos = (showSide == "right") ? leftHolderPos : rightHolderPos;
+        
+        if(objects[i] == "sword") {
+            translate([offset, otherSidePos, baseHeight])
+                rotate([0, 0, 0])
+                bladeholder(supportLength, holderWidth[i], holderHeight, heldDimensions[i][0]*3, heldDimensions[i][0], heldDimensions[i][1]);
+            
+        } else {
+            translate([offset, otherSidePos, baseHeight])
+                rotate([0, 0, 90])
+                handleholder(supportLength, holderWidth[i], holderHeight, heldDimensions[i][1]);
+        }
+        
+        if(objects[i] == "knife" || objects[i] == "sword") {
+            translate([offset, showSidePos, baseHeight])
+                rotate([0, 0, 0])
+                bladeholder(supportLength, holderWidth[i], dropSideHeight, heldDimensions[i][0]*3, heldDimensions[i][0], heldDimensions[i][1]);
+            
+        } else {
+            translate([offset, showSidePos, baseHeight])
+                rotate([0, 0, 90])
+                handleholder(supportLength, holderWidth[i], dropSideHeight, heldDimensions[i][0]);
+        }
+    };
+    basePerimWithTaper = basePerimiter - basePerimiter * (baseTaperPercent/100);
+    if(splitBase) {
+        baseshapesplithulls(baseLength, baseWidth, baseHieght, basePerimiter, basePerimWithTaper);
+        
+    } else {
+        baseshapehull(baseLength, baseWidth, baseHeight, basePerimiter, basePerimWithTaper);
+    }
+};
+//------------------------------------------------------------------------------
+
+//Sum the elements of a vector between zero and the end.
+function SubSum(vec, i, end)=vec[i]+((i == end) ? 0 : SubSum(vec, i+1, end));
+function Sum(vec, end=-1) = (end == -1) ? SubSum(vec, 0, len(vec)-1) : SubSum(vec, 0, end);
 
 // This creates the base with rounded edges
 module baseshapehull(length, width, thiccness, hullrad1, hullrad2) {
     difference() {
     hull(){
         // Creates a hull around four tapered cylinders
-     translate([hullrad1,hullrad1,0]){cylinder(thiccness,hullrad1,hullrad2);};
-     translate([length-hullrad1,width-hullrad1,0]){cylinder(thiccness,hullrad1,hullrad2);};
-     translate([hullrad1,width-hullrad1,0]){cylinder(thiccness,hullrad1,hullrad2);};
-     translate([length-hullrad1,hullrad1,0]){cylinder(thiccness,hullrad1,hullrad2);};
-            };
-            // Comment out the next line to print a solid base, without the hole
-     translate([length*0.15,width*0.25,-10]) {cube([length*0.7, bwidth*0.5, 100]);};
+        translate([hullrad1,hullrad1,0]){
+            cylinder(thiccness,hullrad1,hullrad2);
+        };
+        translate([length-hullrad1,width-hullrad1,0]){
+            cylinder(thiccness,hullrad1,hullrad2);
+        };
+        translate([hullrad1,width-hullrad1,0]){
+            cylinder(thiccness,hullrad1,hullrad2);
+        };
+        translate([length-hullrad1,hullrad1,0]){
+            cylinder(thiccness,hullrad1,hullrad2);
+        };
+        translate([length-hullrad1,hullrad1+10,0]){
+            cylinder(thiccness,hullrad1,hullrad2);
+        };
+    };
+    if(openBase) {
+        translate([length*0.15,baseWidth*0.25,-10]) {
+            cube([length*0.7, baseWidth*0.5, 100]);
+        };
+     }
  };};
+ 
+// This creates a separate base with rounded edges for the blade and hanlde sides
+module baseshapesplithulls(length, width, thiccness, hullrad1, hullrad2) {
+    // Creates a hull around  tapered cylinders for the blade holders
+    hull(){
+        translate([hullrad1,bladepos+hullrad1,0]){
+            cylinder(thiccness,hullrad1,hullrad2);
+        };
+        translate([hullrad1,bladepos-hullrad1,0]){
+            cylinder(thiccness,hullrad1,hullrad2);
+        };
+        translate([length-hullrad1,bladepos+hullrad1,0]){
+            cylinder(thiccness,hullrad1,hullrad2);
+        };
+        translate([length-hullrad1,bladepos-hullrad1,0]){
+            cylinder(thiccness,hullrad1,hullrad2);
+        };
+    };
+    // Creates a hull around  tapered cylinders for the hanlde holders
+    hull(){
+        translate([length-hullrad1,handlepos+hullrad1,0]){
+            cylinder(thiccness,hullrad1,hullrad2);
+        };
+        translate([hullrad1,handlepos-hullrad1,0]){
+            cylinder(thiccness,hullrad1,hullrad2);
+        };
+        translate([length-hullrad1,handlepos-hullrad1,0]){
+            cylinder(thiccness,hullrad1,hullrad2);
+        };
+        translate([hullrad1,handlepos+hullrad1,0]){
+            cylinder(thiccness,hullrad1,hullrad2);
+        };
+    }
+ };
+ 
 // This creates a holder with a round cutout for handles           
 module handleholder(supportlength, supportwidth, height, handlediameter) {
     toplength=(handlediameter*1.1);
@@ -64,33 +192,27 @@ module handleholder(supportlength, supportwidth, height, handlediameter) {
     difference() {
         linear_extrude(height = height, twist = 0, scale = taperpercent, slices = 200)
             square([supportwidth,supportlength], center=true);
-        translate([0,0,height+0.1*handlediameter])rotate([0,90,0])cylinder(h=100,d=handlediameter, center=true);
-
+        
+        translate([0,0,height+0.1*handlediameter])
+            rotate([0,90,0])
+            cylinder(h=100,d=handlediameter, center=true);
     }
 }
+
 // This creates a holder with a notched cutout for blades
 module bladeholder(supportlength, supportwidth, height, bladenotchdepth,bladenotchwidth, handlediameter) {
     toplength=(bladenotchwidth*2);
     taperpercent=toplength/supportlength;
 
     difference() {
-        linear_extrude(height = height, twist = 0, scale = taperpercent, slices = 200) square([supportlength, supportwidth], center=true);
-        translate([0,0,height+0.1*bladenotchdepth])rotate([0,180,0])linear_extrude(height = bladenotchdepth, twist = 0, scale = 0.5, slices = 200)
+        linear_extrude(height = height, twist = 0, scale = taperpercent, slices = 200)
+            square([supportlength, supportwidth], center=true);
+        
+        translate([0,0,height+0.1*bladenotchdepth])
+            rotate([0,180,0])
+            linear_extrude(height = bladenotchdepth, twist = 0, scale = 0.5, slices = 200)
             square([bladenotchwidth,1000], center=true);
-
     }
 }
 
-//If you'd like to make a sword holder with just blades, then replace the two handle-holders with blade holders.
-// Similarly, this makes a pen holder if you change the handletobladefall and then replace with two handleholders
-baselengthoffset=blength/(1+knifenum);
-union(){
-    for (knifeid=[1:knifenum]){
-        knifeoffset=knifeid*baselengthoffset;
-        knifeheight=(knifeid*handleheightdiff);
-        bladeheight=knifeheight-handletobladefall;
-translate([knifeoffset,handlepos,bthiccness])rotate([0,0,90])handleholder(supportlength,supportwidth,knifeheight,handlediameter);
-        translate([knifeoffset,bladepos,bthiccness])rotate([0,0,0])bladeholder(supportlength,supportwidth,bladeheight,bladenotchdepth,bladenotchwidth, handlediameter);
-    };
-    baseshapehull(blength,bwidth,bthiccness,bhullrad1,bhullrad2);
-};
+

@@ -1,6 +1,17 @@
-# The Nick Shabazz Modular Knife, Sword, and Penholder
+# The Nick Shabazz Modular Knife, Sword, and Penholder (dmccaffrey fork)
 
 This is a modular 3D model of a device which can be used to hold knives, pens, swords, or otherwise, generated in [OpenSCAD](https://openscad.org/). Please see the .scad file for comments containing usability details.
+
+## Fork notes
+I made this fork partially to play around with the code, but also to reorganize it and change the parameterization to a format that made more sense to me logically. The functionality and rendering flow is largely the same but with the following changes:
+- Support for specifying held obejcts and their parameters as lists to facilitate simple mixing of knives, pens, etc.
+- Support for generating holders with separate bases to allow large objects to be held easier.
+
+### Possible future changes
+In the future I plan to extend this concept to other types of items I currently display:
+- Calculators
+- Keyboards
+- Watches
 
 ## How to use
 
