@@ -35,7 +35,7 @@ Holder Configuration
 - Drop height specifies the difference between the 'handle' side and non-hanlde side
 */
 objects             = ["pen", "knife", "sword"];
-showSide            = "right";
+showSide            = ["na", "right", "left"];
 holderHeightOffset  = [0, 15, 15];
 holderDepthOffset   = [0, 20, 20];
 holderWidth         = [10, 20, 20];
@@ -84,8 +84,8 @@ union(){
         dropSideHeight = holderHeight - dropHeight[i];
         echo("Generating holder: num=", i, "offset=", offset, "baseHeight=", baseHeight, "dropSideHeight=", dropSideHeight);
         
-        showSidePos = (showSide == "right") ? rightHolderPos : leftHolderPos;
-        otherSidePos = (showSide == "right") ? leftHolderPos : rightHolderPos;
+        showSidePos = (showSide[i] == "right") ? rightHolderPos : leftHolderPos;
+        otherSidePos = (showSide[i] == "right") ? leftHolderPos : rightHolderPos;
         
         if(objects[i] == "sword") {
             translate([offset, otherSidePos, baseHeight])
