@@ -14,17 +14,7 @@ In the future I plan to extend this concept to other types of items I currently 
 - Watches
 
 ## How to use
-
-For more details on how to use this, please see my YouTube video at [https://youtu.be/y_vMpbq15GI](https://youtu.be/y_vMpbq15GI).
-
-I've also included a few specific STL files generated which can be used directly, if you'd rather not generate your own custom files from the .scad file.
-
-- 1knife_handleright.stl - Designed for one knife, with the handle on the right, with sane other settings
-- 1knife_handleleft.stl - Designed for one knife, with the handle on the left, with sane other settings
-- 2knife_handleright.stl - Designed for two knives, with the handle on the right, with sane other settings
-- 2knife_handleleft.stl - Designed for two knives, with the handle on the left, with sane other settings
-- 3knife_handleright.stl - Designed for three knives, with the handle on the right, with sane other settings
-- 3knife_handleleft.stl - Designed for three knives, with the handle on the left, with sane other settings
+See the inline documenation in shabazz_modular_knifeholder.scad
 
 ## How to Donate
 
