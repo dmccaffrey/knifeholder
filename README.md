@@ -14,11 +14,14 @@ In the future I plan to extend this concept to other types of items I currently 
 - Watches
 
 ## How to use
-See the inline documenation in shabazz_modular_knifeholder.scad
+1. Download OpenSCAD for your platform: https://openscad.org/
+2. See the inline documenation in shabazz_modular_knifeholder.scad to configure your desired display stand.
+3. Render with your configuration.
+4. Once you are happy with the displayed model, export to STL or other supported format and import into your slice of choice.
 
 ## How to Donate
 
-If you'd like to support this work or donate, that's very kind, please donate to [OpenSCAD](https://openscad.org/), a [local domestic violence shelter](https://www.thehotline.org/), or, if you insist on donating to me, you can join [my Patreon](https://www.patreon.com/nickshabazz).
+If you'd like to support this work or donate, that's very kind, please donate to [OpenSCAD](https://openscad.org/), a [local domestic violence shelter](https://www.thehotline.org/), or, if you insist on donating to Nick Shabazz, you can join [my Patreon](https://www.patreon.com/nickshabazz).
 
 ## Warranty
 
