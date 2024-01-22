@@ -37,7 +37,8 @@ Holder Configuration
 objects             = ["pen", "knife", "sword"];
 showSide            = ["na", "right", "left"];
 holderHeightOffset  = [0, 15, 15];
-holderDepthOffset   = [0, 20, 20];
+holderDepthOffset   = [5, 5, 0];
+holderDepth         = [30, 30, 30];
 holderWidth         = [10, 20, 20];
 heldDimensions      = [ [15, 10], [3, 20], [6, 6] ];
 dropHeight          = [0, 0, 10];
@@ -50,7 +51,7 @@ Base Configuration
 splitBase           = false;    // Set to true to print separate holder pieces
 openBase            = true;     // Set to true to print the base with a cutout between the holders
 baseTaperPercent    = 20;       // The percentage of taper (bottom to top) for the base
-basePerimiter       = 15;       // The perimeter radius of the base
+basePerimiter       = 25;       // The perimeter radius of the base
 baseHeight          = 8;        // Hight of the base
 baseWidth           = 150;      // Width of the base
 //------------------------------------------------------------------------------
@@ -60,13 +61,10 @@ baseWidth           = 150;      // Width of the base
 Derived Configuration
 --------------------------------------------------------------------------------
 */
-baseLength = Sum(holderDepthOffset) + basePerimiter * 4;
+baseLength = Sum(holderDepthOffset) + Sum(holderDepth);
 echo("Base length: ", baseLength);
 
-supportLength=(0.8 * baseLength) / len(objects);
-echo("Support length: ", supportLength);
-
-supportPosOffset = 0.15;
+supportPosOffset = 0.10;
 leftHolderPos = supportPosOffset * baseWidth;
 rightHolderPos = (1 - supportPosOffset) * baseWidth;
 echo("Handle positions: left=", leftHolderPos, "right=", rightHolderPos);
@@ -79,7 +77,11 @@ Rendering
 union(){
     baseHeight = 10;
     for (i = [0:len(objects)-1]){
-        offset = Sum(holderDepthOffset, i) + basePerimiter * 2;
+        holderDepths = (i > 0) ? Sum(holderDepth, i-1) : 0;
+        holderOffsets = (i > 0) ? Sum(holderDepthOffset, i-1) : 0;
+        offset = holderDepths + holderOffsets + holderDepth[0]/2;
+        echo("Offset=", offset);
+        
         holderHeight = Sum(holderHeightOffset, i) + 10;
         dropSideHeight = holderHeight - dropHeight[i];
         echo("Generating holder: num=", i, "offset=", offset, "baseHeight=", baseHeight, "dropSideHeight=", dropSideHeight);
@@ -90,23 +92,23 @@ union(){
         if(objects[i] == "sword") {
             translate([offset, otherSidePos, baseHeight])
                 rotate([0, 0, 0])
-                bladeholder(supportLength, holderWidth[i], holderHeight, heldDimensions[i][0]*3, heldDimensions[i][0], heldDimensions[i][1]);
+                bladeholder(holderDepth[i], holderWidth[i], holderHeight, heldDimensions[i][0]*3, heldDimensions[i][0], heldDimensions[i][1]);
             
         } else {
             translate([offset, otherSidePos, baseHeight])
                 rotate([0, 0, 90])
-                handleholder(supportLength, holderWidth[i], holderHeight, heldDimensions[i][1]);
+                handleholder(holderDepth[i], holderWidth[i], holderHeight, heldDimensions[i][1]);
         }
         
         if(objects[i] == "knife" || objects[i] == "sword") {
             translate([offset, showSidePos, baseHeight])
                 rotate([0, 0, 0])
-                bladeholder(supportLength, holderWidth[i], dropSideHeight, heldDimensions[i][0]*3, heldDimensions[i][0], heldDimensions[i][1]);
+                bladeholder(holderDepth[i], holderWidth[i], dropSideHeight, heldDimensions[i][0]*3, heldDimensions[i][0], heldDimensions[i][1]);
             
         } else {
             translate([offset, showSidePos, baseHeight])
                 rotate([0, 0, 90])
-                handleholder(supportLength, holderWidth[i], dropSideHeight, heldDimensions[i][0]);
+                handleholder(holderDepth[i], holderWidth[i], dropSideHeight, heldDimensions[i][0]);
         }
     };
     basePerimWithTaper = basePerimiter - basePerimiter * (baseTaperPercent/100);
@@ -124,29 +126,26 @@ function SubSum(vec, i, end)=vec[i]+((i == end) ? 0 : SubSum(vec, i+1, end));
 function Sum(vec, end=-1) = (end == -1) ? SubSum(vec, 0, len(vec)-1) : SubSum(vec, 0, end);
 
 // This creates the base with rounded edges
-module baseshapehull(length, width, thiccness, hullrad1, hullrad2) {
+module baseshapehull(length, width, thiccness, bottomRadius, topRaduis) {
     difference() {
     hull(){
         // Creates a hull around four tapered cylinders
-        translate([hullrad1,hullrad1,0]){
-            cylinder(thiccness,hullrad1,hullrad2);
+        translate([0, 0, 0]){
+            cylinder(thiccness, bottomRadius, topRaduis);
         };
-        translate([length-hullrad1,width-hullrad1,0]){
-            cylinder(thiccness,hullrad1,hullrad2);
+        translate([length, width, 0]){
+            cylinder(thiccness, bottomRadius, topRaduis);
         };
-        translate([hullrad1,width-hullrad1,0]){
-            cylinder(thiccness,hullrad1,hullrad2);
+        translate([0, width, 0]){
+            cylinder(thiccness, bottomRadius, topRaduis);
         };
-        translate([length-hullrad1,hullrad1,0]){
-            cylinder(thiccness,hullrad1,hullrad2);
-        };
-        translate([length-hullrad1,hullrad1+10,0]){
-            cylinder(thiccness,hullrad1,hullrad2);
+        translate([length, 0, 0]){
+            cylinder(thiccness, bottomRadius, topRaduis);
         };
     };
     if(openBase) {
-        translate([length*0.15,baseWidth*0.25,-10]) {
-            cube([length*0.7, baseWidth*0.5, 100]);
+        translate([0, baseWidth * 0.3, -10]) {
+            cube([length, baseWidth * 0.4, 100]);
         };
      }
  };};
@@ -155,32 +154,32 @@ module baseshapehull(length, width, thiccness, hullrad1, hullrad2) {
 module baseshapesplithulls(length, width, thiccness, hullrad1, hullrad2) {
     // Creates a hull around  tapered cylinders for the blade holders
     hull(){
-        translate([hullrad1,bladepos+hullrad1,0]){
+        translate([0,bladepos+hullrad1,0]){
             cylinder(thiccness,hullrad1,hullrad2);
         };
-        translate([hullrad1,bladepos-hullrad1,0]){
+        translate([0,bladepos-hullrad1,0]){
             cylinder(thiccness,hullrad1,hullrad2);
         };
-        translate([length-hullrad1,bladepos+hullrad1,0]){
+        translate([length+hullrad1,bladepos+hullrad1,0]){
             cylinder(thiccness,hullrad1,hullrad2);
         };
-        translate([length-hullrad1,bladepos-hullrad1,0]){
+        translate([length+hullrad1,bladepos-hullrad1,0]){
             cylinder(thiccness,hullrad1,hullrad2);
         };
     };
     // Creates a hull around  tapered cylinders for the hanlde holders
     hull(){
-        translate([length-hullrad1,handlepos+hullrad1,0]){
+        translate([length+hullrad1,handlepos+hullrad1, 0]){
             cylinder(thiccness,hullrad1,hullrad2);
         };
-        translate([hullrad1,handlepos-hullrad1,0]){
+        translate([hullrad1,handlepos-hullrad1, 0]){
             cylinder(thiccness,hullrad1,hullrad2);
         };
-        translate([length-hullrad1,handlepos-hullrad1,0]){
-            cylinder(thiccness,hullrad1,hullrad2);
+        translate([length + hullrad1, handlepos - hullrad1, 0]){
+            cylinder(thiccness, hullrad1, hullrad2);
         };
-        translate([hullrad1,handlepos+hullrad1,0]){
-            cylinder(thiccness,hullrad1,hullrad2);
+        translate([hullrad1, handlepos + hullrad1, 0]){
+            cylinder(thiccness, hullrad1, hullrad2);
         };
     }
  };
