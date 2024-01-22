@@ -75,14 +75,13 @@ Rendering
 --------------------------------------------------------------------------------
 */
 union(){
-    baseHeight = 10;
     for (i = [0:len(objects)-1]){
         holderDepths = (i > 0) ? Sum(holderDepth, i-1) : 0;
         holderOffsets = (i > 0) ? Sum(holderDepthOffset, i-1) : 0;
         offset = holderDepths + holderOffsets + holderDepth[0]/2;
         echo("Offset=", offset);
         
-        holderHeight = Sum(holderHeightOffset, i) + 10;
+        holderHeight = Sum(holderHeightOffset, i) + baseHeight;
         dropSideHeight = holderHeight - dropHeight[i];
         echo("Generating holder: num=", i, "offset=", offset, "baseHeight=", baseHeight, "dropSideHeight=", dropSideHeight);
         
@@ -113,10 +112,10 @@ union(){
     };
     basePerimWithTaper = basePerimiter - basePerimiter * (baseTaperPercent/100);
     if(splitBase) {
-        baseshapesplithulls(baseLength, baseWidth, baseHieght, basePerimiter, basePerimWithTaper);
+        splitBaseShape(baseLength, baseWidth, baseHeight, basePerimiter, basePerimWithTaper);
         
     } else {
-        baseshapehull(baseLength, baseWidth, baseHeight, basePerimiter, basePerimWithTaper);
+        unifiedBaseShape(baseLength, baseWidth, baseHeight, basePerimiter, basePerimWithTaper);
     }
 };
 //------------------------------------------------------------------------------
@@ -126,7 +125,7 @@ function SubSum(vec, i, end)=vec[i]+((i == end) ? 0 : SubSum(vec, i+1, end));
 function Sum(vec, end=-1) = (end == -1) ? SubSum(vec, 0, len(vec)-1) : SubSum(vec, 0, end);
 
 // This creates the base with rounded edges
-module baseshapehull(length, width, thiccness, bottomRadius, topRaduis) {
+module unifiedBaseShape(length, width, thiccness, bottomRadius, topRaduis) {
     difference() {
     hull(){
         // Creates a hull around four tapered cylinders
@@ -151,35 +150,35 @@ module baseshapehull(length, width, thiccness, bottomRadius, topRaduis) {
  };};
  
 // This creates a separate base with rounded edges for the blade and hanlde sides
-module baseshapesplithulls(length, width, thiccness, hullrad1, hullrad2) {
+module splitBaseShape(length, width, thiccness, bottomRadius, topRaduis) {
     // Creates a hull around  tapered cylinders for the blade holders
     hull(){
-        translate([0,bladepos+hullrad1,0]){
-            cylinder(thiccness,hullrad1,hullrad2);
+        translate([0, leftHolderPos, 0]){
+            cylinder(thiccness, bottomRadius, topRaduis);
         };
-        translate([0,bladepos-hullrad1,0]){
-            cylinder(thiccness,hullrad1,hullrad2);
+        translate([length, leftHolderPos, 0]){
+            cylinder(thiccness, bottomRadius, topRaduis);
         };
-        translate([length+hullrad1,bladepos+hullrad1,0]){
-            cylinder(thiccness,hullrad1,hullrad2);
+        translate([0, leftHolderPos, 0]){
+            cylinder(thiccness, bottomRadius, topRaduis);
         };
-        translate([length+hullrad1,bladepos-hullrad1,0]){
-            cylinder(thiccness,hullrad1,hullrad2);
+        translate([length, leftHolderPos, 0]){
+            cylinder(thiccness, bottomRadius, topRaduis);
         };
     };
     // Creates a hull around  tapered cylinders for the hanlde holders
     hull(){
-        translate([length+hullrad1,handlepos+hullrad1, 0]){
-            cylinder(thiccness,hullrad1,hullrad2);
+        translate([length,rightHolderPos, 0]){
+            cylinder(thiccness,bottomRadius, topRaduis);
         };
-        translate([hullrad1,handlepos-hullrad1, 0]){
-            cylinder(thiccness,hullrad1,hullrad2);
+        translate([0,rightHolderPos, 0]){
+            cylinder(thiccness,bottomRadius, topRaduis);
         };
-        translate([length + hullrad1, handlepos - hullrad1, 0]){
-            cylinder(thiccness, hullrad1, hullrad2);
+        translate([length, rightHolderPos, 0]){
+            cylinder(thiccness, bottomRadius, topRaduis);
         };
-        translate([hullrad1, handlepos + hullrad1, 0]){
-            cylinder(thiccness, hullrad1, hullrad2);
+        translate([0, rightHolderPos, 0]){
+            cylinder(thiccness, bottomRadius, topRaduis);
         };
     }
  };
