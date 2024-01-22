@@ -51,7 +51,7 @@ Base Configuration
 splitBase           = false;    // Set to true to print separate holder pieces
 openBase            = true;     // Set to true to print the base with a cutout between the holders
 baseTaperPercent    = 20;       // The percentage of taper (bottom to top) for the base
-basePerimiter       = 25;       // The perimeter radius of the base
+basePerimeter       = 25;       // The perimeter radius of the base
 baseHeight          = 8;        // Hight of the base
 baseWidth           = 150;      // Width of the base
 //------------------------------------------------------------------------------
@@ -91,31 +91,31 @@ union(){
         if(objects[i] == "sword") {
             translate([offset, otherSidePos, baseHeight])
                 rotate([0, 0, 0])
-                bladeholder(holderDepth[i], holderWidth[i], holderHeight, heldDimensions[i][0]*3, heldDimensions[i][0], heldDimensions[i][1]);
+                bladeHolderShape(holderDepth[i], holderWidth[i], holderHeight, heldDimensions[i][0]*3, heldDimensions[i][0], heldDimensions[i][1]);
             
         } else {
             translate([offset, otherSidePos, baseHeight])
                 rotate([0, 0, 90])
-                handleholder(holderDepth[i], holderWidth[i], holderHeight, heldDimensions[i][1]);
+                handleHolderShape(holderDepth[i], holderWidth[i], holderHeight, heldDimensions[i][1]);
         }
         
         if(objects[i] == "knife" || objects[i] == "sword") {
             translate([offset, showSidePos, baseHeight])
                 rotate([0, 0, 0])
-                bladeholder(holderDepth[i], holderWidth[i], dropSideHeight, heldDimensions[i][0]*3, heldDimensions[i][0], heldDimensions[i][1]);
+                bladeHolderShape(holderDepth[i], holderWidth[i], dropSideHeight, heldDimensions[i][0]*3, heldDimensions[i][0], heldDimensions[i][1]);
             
         } else {
             translate([offset, showSidePos, baseHeight])
                 rotate([0, 0, 90])
-                handleholder(holderDepth[i], holderWidth[i], dropSideHeight, heldDimensions[i][0]);
+                handleHolderShape(holderDepth[i], holderWidth[i], dropSideHeight, heldDimensions[i][0]);
         }
     };
-    basePerimWithTaper = basePerimiter - basePerimiter * (baseTaperPercent/100);
+    basePerimWithTaper = basePerimeter - basePerimeter * (baseTaperPercent/100);
     if(splitBase) {
-        splitBaseShape(baseLength, baseWidth, baseHeight, basePerimiter, basePerimWithTaper);
+        splitBaseShape(baseLength, baseWidth, baseHeight, basePerimeter, basePerimWithTaper);
         
     } else {
-        unifiedBaseShape(baseLength, baseWidth, baseHeight, basePerimiter, basePerimWithTaper);
+        unifiedBaseShape(baseLength, baseWidth, baseHeight, basePerimeter, basePerimWithTaper);
     }
 };
 //------------------------------------------------------------------------------
@@ -168,10 +168,10 @@ module splitBaseShape(length, width, thiccness, bottomRadius, topRaduis) {
     };
     // Creates a hull around  tapered cylinders for the hanlde holders
     hull(){
-        translate([length,rightHolderPos, 0]){
+        translate([length, rightHolderPos, 0]){
             cylinder(thiccness,bottomRadius, topRaduis);
         };
-        translate([0,rightHolderPos, 0]){
+        translate([0, rightHolderPos, 0]){
             cylinder(thiccness,bottomRadius, topRaduis);
         };
         translate([length, rightHolderPos, 0]){
@@ -184,32 +184,32 @@ module splitBaseShape(length, width, thiccness, bottomRadius, topRaduis) {
  };
  
 // This creates a holder with a round cutout for handles           
-module handleholder(supportlength, supportwidth, height, handlediameter) {
-    toplength=(handlediameter*1.1);
-    taperpercent=toplength/supportlength;
+module handleHolderShape(supportLength, supportWidth, height, handleDiameter) {
+    topLength = handleDiameter * 1.1;
+    taperPercent = topLength / supportLength;
     difference() {
-        linear_extrude(height = height, twist = 0, scale = taperpercent, slices = 200)
-            square([supportwidth,supportlength], center=true);
+        linear_extrude(height = height, twist = 0, scale = taperPercent, slices = 200)
+            square([supportWidth, supportLength], center=true);
         
-        translate([0,0,height+0.1*handlediameter])
+        translate([0, 0, height + 0.1 * handleDiameter])
             rotate([0,90,0])
-            cylinder(h=100,d=handlediameter, center=true);
+            cylinder(h=100,d=handleDiameter, center=true);
     }
 }
 
 // This creates a holder with a notched cutout for blades
-module bladeholder(supportlength, supportwidth, height, bladenotchdepth,bladenotchwidth, handlediameter) {
-    toplength=(bladenotchwidth*2);
-    taperpercent=toplength/supportlength;
+module bladeHolderShape(supportLength, supportWidth, height, bladeNotchDepth,bladeNotchWidth, handleDiameter) {
+    topLength = bladeNotchWidth * 2;
+    taperPercent = topLength / supportLength;
 
     difference() {
-        linear_extrude(height = height, twist = 0, scale = taperpercent, slices = 200)
-            square([supportlength, supportwidth], center=true);
+        linear_extrude(height = height, twist = 0, scale = taperPercent, slices = 200)
+            square([supportLength, supportWidth], center=true);
         
-        translate([0,0,height+0.1*bladenotchdepth])
-            rotate([0,180,0])
-            linear_extrude(height = bladenotchdepth, twist = 0, scale = 0.5, slices = 200)
-            square([bladenotchwidth,1000], center=true);
+        translate([0, 0, height + 0.1 * bladeNotchDepth])
+            rotate([0, 180, 0])
+            linear_extrude(height = bladeNotchDepth, twist = 0, scale = 0.5, slices = 200)
+            square([bladeNotchWidth, 1000], center=true);
     }
 }
 
